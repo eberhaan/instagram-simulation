@@ -2,8 +2,13 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import os
 
 app = Flask(__name__)
-# ⚠️ WICHTIG: Ersetze den String durch einen echten zufälligen Secret Key
 app.secret_key = "7f1e8b3d41c8e4a997e3b6a48f2f9cdd"
+
+# Sessions in iFrames erlauben
+app.config.update(
+    SESSION_COOKIE_SAMESITE="None",
+    SESSION_COOKIE_SECURE=True
+)
 
 # Ordner für Bilder
 IMAGE_FOLDER = "static/images"
@@ -14,18 +19,17 @@ os.makedirs(IMAGE_FOLDER, exist_ok=True)
 # --------------------
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # Profilbilder: nur die, die "profilepic" im Namen haben
     profilepics = [f for f in os.listdir(IMAGE_FOLDER) if "profilepic" in f]
 
     if request.method == "POST":
         session["username"] = request.form.get("username", "user123")
         session["profilepic"] = request.form.get("profilepic", profilepics[0])
 
-        # Bedingungen & Bildmodus aus URL übernehmen
+        # Bedingungen & Bildmodus speichern
         session["p"] = request.args.get("p", "1")  # 1=selfies, 2=neutral
         session["cond"] = request.args.get("c", "i")  # i=inclusion, e=exclusion
 
-        return redirect(url_for("select"))
+        return redirect(url_for("select", p=session["p"], c=session["cond"]))
 
     return render_template("index.html", profilepics=profilepics)
 
@@ -48,7 +52,7 @@ def select():
 
     if request.method == "POST":
         session["chosen_image"] = request.form.get("chosen_image")
-        return redirect(url_for("post"))
+        return redirect(url_for("post", p=session["p"], c=session["cond"]))
 
     return render_template("select.html", images=imgs, headline=headline)
 
@@ -62,7 +66,7 @@ def post():
 
     if request.method == "POST":
         session["caption"] = request.form.get("caption", "")
-        return redirect(url_for("feed"))
+        return redirect(url_for("feed", p=session["p"], c=session["cond"]))
 
     return render_template("post.html", chosen=chosen)
 
@@ -87,6 +91,9 @@ def feed():
         comments = []
         cond_js = "exclusion"
 
+    # LimeSurvey-Redirect-Link (hier musst du die Survey-URL eintragen!)
+    limesurvey_url = "https://dein-limesurvey-server/index.php/123456?finish=1"
+
     return render_template(
         "feed.html",
         chosen_image=chosen,
@@ -96,8 +103,10 @@ def feed():
         username=username,
         profilepic=profilepic,
         caption=caption,
+        limesurvey_url=limesurvey_url
     )
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
+
