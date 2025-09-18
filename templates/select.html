@@ -28,7 +28,9 @@ img.selected {
       Bitte wähle das Bild, das dir am besten gefällt.
     {% endif %}
   </h3>
-  <form method="POST">
+
+  <!-- Alle Parameter in Action erhalten -->
+  <form method="POST" action="/select?p={{ p }}&c={{ c }}&username={{ username }}&profilepic={{ profilepic }}">
     <input type="hidden" name="chosen_image" id="chosen_image">
     <div class="d-flex flex-wrap">
       {% for img in images %}
@@ -47,3 +49,4 @@ function selectImage(el,name){
 </script>
 </body>
 </html>
+
