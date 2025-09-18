@@ -7,14 +7,19 @@
 </head>
 <body>
 <div class="container mt-5">
-<h3>Schreibe eine Caption für deinen Post</h3>
-<img src="{{ url_for('static', filename='images/' + chosen) }}" style="width:300px;border-radius:10px;">
-<form method="POST" class="mt-3">
-  <div class="mb-3">
-    <textarea class="form-control" name="caption" rows="3" placeholder="Deine Caption..."></textarea>
-  </div>
-  <button class="btn btn-primary">Posten</button>
-</form>
+  <h3>Schreibe eine Caption für deinen Post</h3>
+
+  <img src="{{ url_for('static', filename='images/' + chosen) }}" style="width:300px;border-radius:10px;">
+
+  <!-- Parameter in Action weiterreichen -->
+  <form method="POST" class="mt-3"
+        action="/post?p={{ p }}&c={{ c }}&username={{ username }}&profilepic={{ profilepic }}&chosen_image={{ chosen }}">
+    <div class="mb-3">
+      <textarea class="form-control" name="caption" rows="3" placeholder="Deine Caption..."></textarea>
+    </div>
+    <button class="btn btn-primary">Posten</button>
+  </form>
 </div>
 </body>
 </html>
+
