@@ -9,14 +9,14 @@
 body { background:#fafafa; font-family:'Arial',sans-serif; margin:0; padding-bottom:80px; }
 .post-card { max-width:500px; margin:2rem auto; border:1px solid #dbdbdb; border-radius:15px; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
 .post-header, .post-footer { padding:10px; }
-.post-img { width:100%; border-radius:10px 10px 0 0; }
-.likes { font-weight:bold; font-size:1rem; margin-left:8px; }
-.comment { margin:10px 0 0 0; font-size:0.9rem; }
+.post-img { width:100%; border-radius:10px 10px 0 0; max-height:450px; object-fit:cover; } /* minimal kleiner */
+.likes { font-weight:bold; font-size:1.2rem; margin-left:10px; } /* größer */
+.comment { margin:10px 0 0 0; font-size:0.95rem; }
 .nav-bottom { position:fixed; bottom:0; left:0; right:0; border-top:1px solid #dbdbdb; background:white; display:flex; justify-content:space-around; padding:10px 0; z-index:100;}
-.nav-bottom a { color:black; font-size:1.5rem; }
+.nav-bottom a { color:black; font-size:1.6rem; } /* leicht größer */
 .toast { position: fixed; top:80px; right:-300px; background:#fff; border:1px solid #dbdbdb; padding:10px 15px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); opacity:0; transition:all 0.5s ease; z-index:2000;}
 .toast.show { opacity:1; right:20px;}
-.heart-animate { color:red !important; transform: scale(1.4); transition: all 0.3s ease; }
+.heart-animate { color:red !important; transform: scale(1.5); transition: all 0.3s ease; } /* etwas größer */
 </style>
 </head>
 <body>
@@ -161,3 +161,4 @@ updateFeed();
 
 </body>
 </html>
+
