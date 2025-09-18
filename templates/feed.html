@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Feed</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<style>
+body { background:#fafafa; font-family:'Arial',sans-serif; margin:0; padding-bottom:80px; }
+.post-card { max-width:500px; margin:2rem auto; border:1px solid #dbdbdb; border-radius:15px; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+.post-header, .post-footer { padding:10px; }
+.post-img { width:100%; border-radius:10px 10px 0 0; }
+.likes { font-weight:bold; font-size:1rem; margin-left:8px; }
+.comment { margin:10px 0 0 0; font-size:0.9rem; }
+.nav-bottom { position:fixed; bottom:0; left:0; right:0; border-top:1px solid #dbdbdb; background:white; display:flex; justify-content:space-around; padding:10px 0; z-index:100;}
+.nav-bottom a { color:black; font-size:1.5rem; }
+.toast { position: fixed; top:80px; right:-300px; background:#fff; border:1px solid #dbdbdb; padding:10px 15px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); opacity:0; transition:all 0.5s ease; z-index:2000;}
+.toast.show { opacity:1; right:20px;}
+.heart-animate { color:red !important; transform: scale(1.4); transition: all 0.3s ease; }
+</style>
+</head>
+<body>
+
+<div class="post-card">
+  <div class="post-header d-flex align-items-center">
+    <img src="{{ url_for('static', filename='images/' + profilepic) }}" class="rounded-circle me-2" width="40" height="40">
+    <strong>{{ username }}</strong>
+  </div>
+  <img src="{{ url_for('static', filename='images/' + chosen_image) }}" class="post-img">
+  <div class="post-footer">
+    <p>{{ caption }}</p>
+    <div class="d-flex align-items-center gap-3 mb-2">
+      <i id="heart" class="fa-regular fa-heart fa-lg"></i>
+      <span class="likes" id="likes">0 Likes</span>
+      <i class="fa-regular fa-comment fa-lg"></i>
+      <i class="fa-regular fa-paper-plane fa-lg"></i>
+      <i class="fa-regular fa-bookmark fa-lg ms-auto"></i>
+    </div>
+    <div id="comments"></div>
+  </div>
+</div>
+
+<div class="nav-bottom">
+  <a href="#"><i class="fa-solid fa-house"></i></a>
+  <a href="#"><i class="fa-solid fa-magnifying-glass"></i></a>
+  <a href="#"><i class="fa-regular fa-square-plus"></i></a>
+  <a href="#"><i class="fa-solid fa-video"></i></a>
+  <a href="#"><i class="fa-regular fa-user"></i></a>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+let likes = 0;
+let displayLikes = 0;
+let comments = [];
+const maxLikes = {{ likes }};
+const allComments = {{ comments|tojson }};
+const condition = {{ cond|tojson }};
+const usernames = ["holymelon","sunsetvibes","pixelqueen","coffeeaddict","wanderlust","moonlight","tinycloud","dreamer","starlord","glitterbug"];
+let shownNotifications = new Set();
+let lastNotificationTime = 0;
+let commentIndex = 0;
+
+const notifications_inclusion = [
+    {msg: "Dein Post scheint gut anzukommen!", trigger: 150},
+    {msg: "Wow, schon 500 Likes!", trigger: 500},
+    {msg: "Toll, du bist beliebt!", trigger: 750},
+    {msg: "Dein Post hat schon 1000 Likes!", trigger: 1000}
+];
+const notifications_exclusion = [
+    {msg: "Dein Post scheint gar nicht gut anzukommen...", trigger: 30},
+    {msg: "Bisher hat keiner deiner Follower den Post geliked.", trigger: 60},
+    {msg: "Dein Post erhält kaum Aufmerksamkeit.", trigger: 90},
+    {msg: "Vielleicht probierst du es nochmal?", trigger: 110}
+];
+
+function showToast(message){
+    const toast = document.createElement('div');
+    toast.className = "toast";
+    toast.innerText = message;
+    document.getElementById('toast-container').appendChild(toast);
+    setTimeout(()=>{ toast.classList.add('show'); },100);
+    setTimeout(()=>{ toast.classList.remove('show'); setTimeout(()=>toast.remove(),500);},4000);
+    lastNotificationTime = Date.now();
+}
+
+let tick = 0;
+let timer = (condition==="inclusion") ? 180 : 120;  // Inklusion 3 Min, Exklusion 2 Min
+
+// Kommentar-Zeitplan
+const commentSchedule = [30, 45, 60, 80, 100, 120];
+
+function updateFeed(){
+    tick++;
+
+    // Likes: exponentiell steigend
+    if(condition==="inclusion"){
+        let step = Math.ceil(Math.pow(tick*0.03,1.4) * (0.5+Math.random()));
+        likes += step;
+    } else {
+        if(tick===10) likes=1;
+        if(tick===50) likes=2;
+        if(tick===80) likes=3;
+        if(tick===100) likes=4;
+    }
+    if(likes > maxLikes) likes = maxLikes;
+
+    // sanfte Anzeige
+    if(displayLikes < likes){
+        displayLikes += Math.ceil((likes - displayLikes)*0.3);
+        if(displayLikes > likes) displayLikes = likes;
+        document.getElementById('likes').innerText = displayLikes + " Likes";
+
+        // Herz animieren
+        const heart = document.getElementById("heart");
+        heart.classList.add("fa-solid","heart-animate");
+        heart.classList.remove("fa-regular");
+        setTimeout(()=>heart.classList.remove("heart-animate"),300);
+    }
+
+    // Kommentare zeitgesteuert
+    const commentsDiv = document.getElementById('comments');
+    if(commentIndex < allComments.length && tick >= commentSchedule[commentIndex]){
+        const div = document.createElement('div');
+        div.classList.add('comment');
+        const user = usernames[Math.floor(Math.random()*usernames.length)];
+        div.innerHTML = "<strong>" + user + ":</strong> " + allComments[commentIndex];
+        commentsDiv.appendChild(div);
+        commentIndex++;
+    }
+
+    // Notifications
+    if(condition==="inclusion"){
+        notifications_inclusion.forEach(n=>{
+            if(likes >= n.trigger && !shownNotifications.has(n.msg)){
+                if(Date.now()-lastNotificationTime>5000){
+                    showToast(n.msg);
+                    shownNotifications.add(n.msg);
+                }
+            }
+        });
+    } else {
+        notifications_exclusion.forEach(n=>{
+            if(tick >= n.trigger && !shownNotifications.has(n.msg)){
+                if(Date.now()-lastNotificationTime>5000){
+                    showToast(n.msg);
+                    shownNotifications.add(n.msg);
+                }
+            }
+        });
+    }
+
+    if(timer>0){ 
+        timer--; 
+        setTimeout(updateFeed,1000);
+    }
+}
+updateFeed();
+</script>
+
+</body>
+</html>
